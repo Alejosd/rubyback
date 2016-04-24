@@ -32,6 +32,22 @@ get '/users/:username' do
 
 end
 
+get '/users' do
+
+  documents=client[collection_users].find().projection(:_id => 0,:username => 1).to_a
+  content_type :json
+  documents.to_json
+
+end
+
+delete '/users' do
+  content= JSON.parse(request.body.read)
+  puts content
+  client[collection_users].find(content).delete_one
+  [200, {}, {:user => "delete"}.to_json]
+
+
+end
 
 post '/users/save' do
 
