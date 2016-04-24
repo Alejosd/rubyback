@@ -11,17 +11,24 @@ db= ENV['MONGO_DB'] || 'doom'
 
 puts "Connecting to #{host}:#{port}"
 
-client = Mongo::Client.new(["#{host}:#{port}"],:database => db,:max_pool_size => 5)
+client = Mongo::Client.new(["#{host}:#{port}"],:database => db)
 
 set :port, 8081
+
+collection_users = :users
 
 get '/users/:username' do
 
  username="#{params['username']}"
- collection_users = :users
- bson=client[collection_users].find(:username => username).projection(:_id => 0,:username => 1).to_a
+ documents=client[collection_users].find(:username => username).projection(:_id => 0,:username => 1).limit(1).to_a
+ result={}
+
+ documents.each do |document|
+   result = document
+ end
+
  content_type :json
- bson[0].to_json
+ result.to_json
 
 end
 
@@ -29,10 +36,7 @@ end
 post '/users/save' do
 
   content= JSON.parse(request.body.read)
-  collection_users = :users
-  bson=client[collection_users].insert_one({ username: content["username"] })
+  client[collection_users].insert_one(content)
   [200, {}, {:user => "created"}.to_json]
-
-
 
 end
